@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generadores de números pseudoaleatorios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <span class="eyebrow">Simulación Digital</span>
+    <h1>Generadores de números pseudoaleatorios</h1>
+    <p class="lede">Dos algoritmos propios, uno congruencial y otro no congruencial, con detección automática de ciclo: en cuanto un valor se repite, la generación se detiene y se avisa a partir de qué punto la secuencia empezaría a repetirse.</p>
+
+    <div class="swatch-band"><i></i><i></i><i></i><i></i><i></i></div>
+
+    <div class="team">
+      <span class="team-label">Integrantes</span>
+      <span class="member"><span class="avatar">EM</span>Elías Mieles Gómez</span>
+      <span class="member"><span class="avatar">RM</span>Ramiro Mejía Conde</span>
+    </div>
+  </header>
+
+  <div class="rule-box">
+    <h2>Regla común a ambos generadores</h2>
+    <p>Ningún generador de este tipo es infinito: todo algoritmo determinístico basado en una semilla entra tarde o temprano en un ciclo, porque el conjunto de valores posibles es finito. Por eso, cada vez que se genera un número nuevo, el programa revisa si ese valor ya había aparecido antes. Si aparece una repetición, detiene la secuencia ahí mismo y reporta en qué posición ocurrió y cuántos números se alcanzaron a generar sin repetirse (el periodo).</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- ================= CONGRUENCIAL ================= -->
+    <section class="panel congruencial">
+      <h2>Generador congruencial lineal</h2>
+      <p class="subtitle">X(i+1) = (a·X(i) + c) mod m</p>
+
+      <details class="explain">
+        <summary>Reglas del algoritmo</summary>
+        <div class="body">
+          <p>Propuesto por D. H. Lehmer. Parte de una semilla X0 y aplica siempre la misma fórmula recursiva:</p>
+          <ol>
+            <li>Se elige una semilla entera X0 (0 ≤ X0 &lt; m).</li>
+            <li>Se calcula X(i+1) = (a·X(i) + c) mod m.</li>
+            <li>El número pseudoaleatorio en (0,1) es r(i) = X(i) / (m − 1).</li>
+            <li>Se repite el paso 2 hasta juntar los n valores pedidos o hasta que un X(i) se repita.</li>
+          </ol>
+          <p>Para que el ciclo sea lo más largo posible (periodo máximo = m) se exige que m sea potencia de 2, que a ≡ 1 (mod 4) y que c sea impar. Las tres variables a, c y m no están fijas: se piden explícitamente abajo, y el programa te dice si con los valores que escribiste el periodo máximo queda garantizado.</p>
+        </div>
+      </details>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="lcg-preset">Rellenar con un ejemplo</label>
+          <select id="lcg-preset">
+            <option value="corto">Corto — m = 256 (para ver el ciclo rápido)</option>
+            <option value="medio" selected>Medio — m = 65 536</option>
+            <option value="largo">Largo — m = 2 147 483 648 (casi nunca repite)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="lcg-m">m (módulo)</label>
+          <input type="text" inputmode="numeric" id="lcg-m" value="65536">
+        </div>
+        <div class="field">
+          <label for="lcg-a">a (multiplicador)</label>
+          <input type="text" inputmode="numeric" id="lcg-a" value="2045">
+        </div>
+        <div class="field">
+          <label for="lcg-c">c (incremento)</label>
+          <input type="text" inputmode="numeric" id="lcg-c" value="8365">
+        </div>
+      </div>
+      <div class="used-params" id="lcg-validation"></div>
+
+      <div class="field-row" style="margin-top:14px;">
+        <div class="field" id="lcg-seed-field">
+          <label for="lcg-seed">Semilla X0</label>
+          <input type="number" id="lcg-seed" value="7" min="0">
+        </div>
+        <div class="field">
+          <label for="lcg-count">Cuántos aleatorios generar</label>
+          <input type="number" id="lcg-count" value="20" min="1" max="5000">
+        </div>
+      </div>
+
+      <button class="generate-btn" id="lcg-generate">Generar</button>
+
+      <div class="status" id="lcg-status"></div>
+      <div class="used-params" id="lcg-params"></div>
+
+      <div class="results-wrap" id="lcg-results" style="display:none;">
+        <div class="results-head">
+          <span id="lcg-count-label"></span>
+          <button class="copy-btn" id="lcg-copy">Copiar tabla</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>i</th><th>X(i)</th><th>r(i)</th></tr></thead>
+            <tbody id="lcg-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= NO CONGRUENCIAL ================= -->
+    <section class="panel no-congruencial">
+      <h2>Generador de cuadrados medios</h2>
+      <p class="subtitle">Von Neumann, década de 1940 — no congruencial</p>
+
+      <details class="explain">
+        <summary>Reglas del algoritmo</summary>
+        <div class="body">
+          <p>No usa una fórmula lineal; en su lugar, cada número se obtiene elevando el anterior al cuadrado y quedándose con los dígitos del centro:</p>
+          <ol>
+            <li>Se elige una semilla X0 con D dígitos.</li>
+            <li>Se calcula Y(i) = X(i)² y se toman sus D dígitos centrales; si el cuadrado tiene menos de D dígitos, se completa con ceros a la izquierda.</li>
+            <li>X(i+1) son los D dígitos centrales de Y(i).</li>
+            <li>r(i) = 0.[D dígitos centrales].</li>
+            <li>Se repite hasta juntar los n valores pedidos, hasta que se repita un valor, o hasta que el resultado degenere en 0 (algo que le puede pasar a este método y que también se reporta).</li>
+          </ol>
+        </div>
+      </details>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="ms-digits">Dígitos de la semilla (D)</label>
+          <select id="ms-digits">
+            <option value="4" selected>4 dígitos (1000–9999)</option>
+            <option value="6">6 dígitos (100000–999999)</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="used-params">Este método no funciona sin una semilla: toda la secuencia parte de X0.</p>
+
+      <div class="field-row">
+        <div class="field" id="ms-seed-field">
+          <label for="ms-seed">Semilla X0</label>
+          <input type="number" id="ms-seed" value="5735" min="1000" max="9999">
+        </div>
+        <div class="field">
+          <label for="ms-count">Cuántos aleatorios generar</label>
+          <input type="number" id="ms-count" value="20" min="1" max="5000">
+        </div>
+      </div>
+
+      <button class="generate-btn" id="ms-generate">Generar</button>
+
+      <div class="status" id="ms-status"></div>
+      <div class="used-params" id="ms-params"></div>
+
+      <div class="results-wrap" id="ms-results" style="display:none;">
+        <div class="results-head">
+          <span id="ms-count-label"></span>
+          <button class="copy-btn" id="ms-copy">Copiar tabla</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>i</th><th>X(i)</th><th>r(i)</th></tr></thead>
+            <tbody id="ms-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    Actividad de corte - Simulación Digital
+    <div class="names">Elías Mieles Gómez &nbsp;·&nbsp; Ramiro Mejía Conde</div>
+  </footer>
+</div>
+
+<script src="generadores.js"></script>
+</body>
+</html>
